@@ -231,5 +231,4 @@ You must be able to explain:
 
 ## Author
 
-Project developed as part of the 42 curriculum.
-
+Marc Justin Zibrian
