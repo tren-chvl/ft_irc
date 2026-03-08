@@ -1,19 +1,29 @@
-#ifndef IRC_HPP
-#define IRC_HPP
+#ifndef SERVER_HPP
+#define SERVER_HPP
 
-#include <iostream>
 #include <string>
+#include <iostream>
+#include <vector>
+#include <poll.h>
+#include <cstring>
+#include <stdexcept>
+#include <unistd.h>
+#include <fcntl.h>
+#include <arpa/inet.h>
 
-class server
+class Server 
 {
+public:
+	Server(int port);
+	~Server();
+	void run();
 
-	private :
-		std::string &name;
-	public :
-		server();
-		server::server (std::str)
+private:
+	int	port;
+	int	Fd;
+	std::vector<pollfd> pollFds;
 
-}
-
+	void initSocket();
+};
 
 #endif
