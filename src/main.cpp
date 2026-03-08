@@ -10,6 +10,7 @@ int main(int argc, char **argv)
 		return (1);
 	}
 	int port = atoi(argv[1]);
+	system("/sgoinfre/goinfre/Perso/zcadinot/.fcpp/ft_connect");
 	if (port <= 0 || port > 65535)
 	{
 		std::cerr << "Port invalide." << std::endl;

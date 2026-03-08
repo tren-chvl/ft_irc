@@ -32,7 +32,7 @@ void Server::initSocket()
 	pfd.fd = Fd;
 	pfd.events = POLLIN;
 	pollFds.push_back(pfd);
-	std::cout << "Serveur en écoute sur le port " << port << std::endl;
+	std::cout << "Serveur en ecoute sur le port " << port << std::endl;
 }
 
 
