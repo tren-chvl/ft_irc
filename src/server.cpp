@@ -35,6 +35,18 @@ void Server::initSocket()
 	std::cout << "Serveur en ecoute sur le port " << port << std::endl;
 }
 
+void Server::acceptClient()
+{
+	int ClientFd = accept(Fd, NULL, NULL);
+	if (ClientFd < 0)
+		return ;
+	fcntl(ClientFd, F_SETFL, O_NONBLOCK);
+	pollfd poll_fd;
+	poll_fd.fd = ClientFd;
+	poll_fd.events = POLLIN;
+	pollFds.push_back(poll_fd);
+	std::cout << "new client connected : FD = " << ClientFd << std::endl;
+}
 
 void Server::run() 
 {
@@ -43,5 +55,13 @@ void Server::run()
 		int ret = poll(&pollFds[0], pollFds.size(), -1);
 		if (ret < 0)
 			continue ;
+		for (size_t i = 0;i < pollFds.size(); i++)
+		{
+			if (pollFds[i].fd == Fd && (pollFds[i].revents & POLLIN))
+			{
+				acceptClient();
+			}
+		}
 	}
 }
+

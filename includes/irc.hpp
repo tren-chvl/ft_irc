@@ -24,6 +24,7 @@ private:
 	std::vector<pollfd> pollFds;
 
 	void initSocket();
+	void acceptClient(); 
 };
 
 #endif
