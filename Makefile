@@ -3,7 +3,9 @@ CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 INCLUDES = -Iincludes
 SRC = src/main.cpp \
-		src/server.cpp
+		src/server.cpp \
+		src/Client.cpp \
+		src/take.cpp
 OBJ = $(SRC:.cpp=.o)
 
 all: $(NAME)

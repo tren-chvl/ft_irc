@@ -45,7 +45,39 @@ void Server::acceptClient()
 	poll_fd.fd = ClientFd;
 	poll_fd.events = POLLIN;
 	pollFds.push_back(poll_fd);
+	clients[ClientFd] = Client(ClientFd);
 	std::cout << "new client connected : FD = " << ClientFd << std::endl;
+}
+
+void Server::remove_Client(int clientFd)
+{
+	close(clientFd);
+	for (size_t i = 0; i < pollFds.size(); i++)
+	{
+		if (pollFds[i].fd == clientFd)
+		{
+			pollFds.erase(pollFds.begin() + i);
+			break;
+		}
+	}
+	clients.erase(clientFd);
+	std::cout << "Client removed: FD = " << clientFd << std::endl;
+}
+
+
+void Server::Client_msg(int clienFd)
+{
+	char buffer[1000];
+	int byte = recv(clienFd, buffer, sizeof(buffer) - 1, 0);
+	if (byte <= 0)
+	{
+		remove_Client(clienFd);
+		return ;
+	}
+	buffer[byte] = '\0';
+	Client &client = clients[clienFd];
+	client.appendToBuffer(buffer);
+	client_to_buf(client);
 }
 
 void Server::run() 
@@ -61,7 +93,43 @@ void Server::run()
 			{
 				acceptClient();
 			}
+			else if (pollFds[i].fd != Fd && (pollFds[i].revents & POLLIN))
+			{
+				Client_msg(pollFds[i].fd);
+			}
 		}
 	}
 }
 
+
+
+void Server::client_to_buf(Client &client)
+{
+	std::string &buf = client.getBufferr();
+	size_t pos;
+
+	while ((pos = buf.find("\r\n")) != std::string::npos)
+	{
+		std::string cmd = buf.substr(0, pos);
+		buf.erase(0, pos + 2);
+		if (!cmd.empty())
+		{
+			std::cout << "Order received from the customer " << client.getFd() << " : ["
+						<< cmd << "]"  << std::endl;
+			parse_command(client, cmd);
+		}
+	}
+	
+}
+
+void Server::parse_command(Client &client, const std::string &cmd)
+{
+	if (cmd.rfind("NICK ", 0) == 0)
+		takeNick(client, cmd.substr(5));
+	else if (cmd.rfind("USER ", 0) == 0)
+		takeUser(client, cmd.substr(5));
+	else if (cmd.rfind("PASS ", 0) == 0)
+		takePass(client, cmd.substr(5));
+	else 
+		std::cout << "Unknown command :" << cmd << std::endl;
+}
