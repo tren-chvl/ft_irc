@@ -1,5 +1,7 @@
 #include "../includes/irc.hpp"
 
+Client::Client(): fd(-1), nickname(""), username(""), realname(""), buffer(""), has_Pass(false), has_Nick(false), has_User(false), regist(false)
+{}
 
 Client::Client(int fd) : fd(fd), nickname(""), username(""), realname(""), buffer(""), has_Pass(false), has_Nick(false), has_User(false), regist(false)
 {}
@@ -29,7 +31,7 @@ std::string Client::getBuffer() const
 	return (buffer);
 }
 
-std::string &Client::getBufferr()
+std::string &Client::getBuffer()
 {
 	return (buffer);
 }

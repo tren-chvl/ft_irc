@@ -3,6 +3,7 @@
 
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <poll.h>
 #include <cstring>
@@ -28,7 +29,10 @@ class Server
 	void remove_Client(int clientFd);
 	void client_to_buf(Client &client);
 	void parse_command(Client &client, const std::string &cmd);
-
+	void takePass(Client &client, const std::string &arg);
+	void takeNick(Client &client, const std::string &arg);
+	void takeUser(Client &client, const std::string &arg);
+	void regist_Client(Client &client);
 	public:
 		Server(int port);
 		~Server();

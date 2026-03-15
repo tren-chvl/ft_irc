@@ -105,7 +105,7 @@ void Server::run()
 
 void Server::client_to_buf(Client &client)
 {
-	std::string &buf = client.getBufferr();
+	std::string &buf = client.getBuffer();
 	size_t pos;
 
 	while ((pos = buf.find("\r\n")) != std::string::npos)

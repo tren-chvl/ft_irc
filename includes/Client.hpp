@@ -13,6 +13,7 @@ class Client
 		std::string buffer;
 
 	public:
+		Client();
 		Client(int fd);
 
 	int			getFd() const;
@@ -20,7 +21,7 @@ class Client
 	std::string	getUsername() const;
 	std::string	getRealname() const;
 	std::string	getBuffer() const;
-	std::string &getBufferr();
+	std::string &getBuffer();
 	void		setNickname(const std::string& nick);
 	void		setUsername(const std::string& user);
 	void		setRealname(const std::string& real);
