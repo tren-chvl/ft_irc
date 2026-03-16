@@ -33,6 +33,8 @@ class Server
 	void takeNick(Client &client, const std::string &arg);
 	void takeUser(Client &client, const std::string &arg);
 	void regist_Client(Client &client);
+	void takePing(Client &client, const std::string &arg);
+
 	public:
 		Server(int port);
 		~Server();

@@ -51,6 +51,7 @@ void Server::acceptClient()
 
 void Server::remove_Client(int clientFd)
 {
+	std::cout << "Client " << clientFd << " disconnected" << std::endl;
 	close(clientFd);
 	for (size_t i = 0; i < pollFds.size(); i++)
 	{
@@ -61,7 +62,6 @@ void Server::remove_Client(int clientFd)
 		}
 	}
 	clients.erase(clientFd);
-	std::cout << "Client removed: FD = " << clientFd << std::endl;
 }
 
 
@@ -101,25 +101,20 @@ void Server::run()
 	}
 }
 
-
-
-void Server::client_to_buf(Client &client)
+void	Server::client_to_buf(Client &client)
 {
-	std::string &buf = client.getBuffer();
-	size_t pos;
+	std::string	&buf = client.getBuffer();
+	size_t	pos;
 
-	while ((pos = buf.find("\r\n")) != std::string::npos)
+	while ((pos = buf.find("\n")) != std::string::npos)
 	{
 		std::string cmd = buf.substr(0, pos);
-		buf.erase(0, pos + 2);
+		if (!cmd.empty() && cmd[cmd.size() - 1] == '\r')
+			cmd.erase(cmd.size() - 1);
+		buf.erase(0, pos + 1);
 		if (!cmd.empty())
-		{
-			std::cout << "Order received from the customer " << client.getFd() << " : ["
-						<< cmd << "]"  << std::endl;
 			parse_command(client, cmd);
-		}
 	}
-	
 }
 
 void Server::parse_command(Client &client, const std::string &cmd)
@@ -130,6 +125,15 @@ void Server::parse_command(Client &client, const std::string &cmd)
 		takeUser(client, cmd.substr(5));
 	else if (cmd.rfind("PASS ", 0) == 0)
 		takePass(client, cmd.substr(5));
-	else 
+	else if (cmd.compare(0, 4, "PING") == 0)
+	{
+		std::string arg;
+		if (cmd.size() > 5)
+			arg = cmd.substr(5);
+		else
+			arg = "";
+		takePing(client, arg);
+	}
+	else
 		std::cout << "Unknown command :" << cmd << std::endl;
 }

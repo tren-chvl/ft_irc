@@ -5,7 +5,8 @@ INCLUDES = -Iincludes
 SRC = src/main.cpp \
 		src/server.cpp \
 		src/Client.cpp \
-		src/take.cpp
+		src/take.cpp \
+		src/ping_pong.cpp
 OBJ = $(SRC:.cpp=.o)
 
 all: $(NAME)
