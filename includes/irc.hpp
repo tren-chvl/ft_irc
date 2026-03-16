@@ -20,6 +20,7 @@ class Server
 	private:
 		int	port;
 		int	Fd;
+		std::string password;
 		std::vector<pollfd> pollFds;
 		std::map<int, Client> clients;
 
@@ -34,9 +35,9 @@ class Server
 	void takeUser(Client &client, const std::string &arg);
 	void regist_Client(Client &client);
 	void takePing(Client &client, const std::string &arg);
-
+	void takeQuit(Client &client, const std::string &arg);
 	public:
-		Server(int port);
+		Server(int port, const std::string &password);
 		~Server();
 		void run();
 };

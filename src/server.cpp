@@ -1,6 +1,6 @@
 #include "../includes/irc.hpp"
 
-Server::Server(int port) : port(port) 
+Server::Server(int port, const std::string &password) : port(port), password(password)
 {
 	initSocket();
 }
@@ -133,6 +133,15 @@ void Server::parse_command(Client &client, const std::string &cmd)
 		else
 			arg = "";
 		takePing(client, arg);
+	}
+	else if (cmd.rfind("QUIT", 0) == 0)
+	{
+		std::string arg;
+		if (cmd.size() > 5)
+			arg = cmd.substr(5);
+		else
+			arg = "";
+		takeQuit(client, arg);
 	}
 	else
 		std::cout << "Unknown command :" << cmd << std::endl;

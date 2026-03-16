@@ -11,5 +11,9 @@ void Server::takePing(Client &client, const std::string &arg)
 	send(client.getFd(), reply.c_str(), reply.size(), 0);
 }
 
-
-
+void Server::takeQuit(Client &client, const std::string &arg)
+{
+	std::string msg = arg.empty() ? "Client Quit" : arg;
+	std::cout << "Client " << client.getFd() << " QUIT ("  << msg << ")" << std::endl;
+	remove_Client(client.getFd());
+}
