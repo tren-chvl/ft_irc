@@ -6,7 +6,9 @@ SRC = src/main.cpp \
 		src/server.cpp \
 		src/Client.cpp \
 		src/take.cpp \
-		src/ping_pong.cpp
+		src/ping_pong.cpp \
+		src/Channel.cpp \
+		src/Privmsg.cpp
 OBJ = $(SRC:.cpp=.o)
 
 all: $(NAME)

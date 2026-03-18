@@ -78,3 +78,30 @@ void Server::regist_Client(Client &client)
 	send(client.getFd(), welcome.c_str(), welcome.size(), 0);
 	std::cout << "Client FD " << client.getFd() << " registered !" << std::endl;
 }
+
+void Server::takeJoin(Client &client, const std::string &arg)
+{
+	if (!client.regist)
+		return;
+	if (arg.empty())
+		return;
+	std::string chanName = arg;
+	if (chanName[0] != '#')
+		chanName = "#" + chanName;
+	if (!channels.count(chanName))
+		channels.insert(std::make_pair(chanName, Channel(chanName)));
+	Channel &chan = channels.find(chanName)->second;
+	if (chan.isMember(client.getFd()))
+		return;
+	chan.addMember(client.getFd());
+	std::string joinmsg = ":" + client.getNickname() + " JOIN " + chanName + "\r\n";
+	for (std::set<int>::const_iterator it = chan.getMember().begin();it != chan.getMember().end(); ++it)
+		send(*it, joinmsg.c_str(), joinmsg.size(), 0);
+	std::string names = "= " + chanName + " :";
+	for (std::set<int>::const_iterator it = chan.getMember().begin();it != chan.getMember().end(); ++it)
+		names += clients[*it].getNickname() + " ";
+	names += "\r\n";
+	send(client.getFd(), names.c_str(), names.size(), 0);
+	std::cout << "FD " << client.getFd() << " joined " << chanName << std::endl;
+}
+

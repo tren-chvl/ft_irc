@@ -69,7 +69,9 @@ void Server::Client_msg(int clienFd)
 {
 	char buffer[1000];
 	int byte = recv(clienFd, buffer, sizeof(buffer) - 1, 0);
-	if (byte <= 0)
+	if (byte < 0)
+		return ;
+	if (byte == 0)
 	{
 		remove_Client(clienFd);
 		return ;
@@ -119,6 +121,8 @@ void	Server::client_to_buf(Client &client)
 
 void Server::parse_command(Client &client, const std::string &cmd)
 {
+	if (cmd.empty() || cmd == "\n" || cmd == "\r" || cmd == "\r\n")
+		return ;
 	if (cmd.rfind("NICK ", 0) == 0)
 		takeNick(client, cmd.substr(5));
 	else if (cmd.rfind("USER ", 0) == 0)
@@ -143,6 +147,12 @@ void Server::parse_command(Client &client, const std::string &cmd)
 			arg = "";
 		takeQuit(client, arg);
 	}
+	else if (cmd.rfind("JOIN ", 0) == 0)
+		takeJoin(client, cmd.substr(5));
+	else if (cmd.rfind("PRIVMSG ", 0) == 0)
+		takePrivmsg(client, cmd.substr(8));
+	else if (cmd.rfind("PART ", 0) == 0)
+		takePart(client, cmd.substr(5));
 	else
 		std::cout << "Unknown command :" << cmd << std::endl;
 }

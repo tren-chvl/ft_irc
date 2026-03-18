@@ -6,13 +6,15 @@
 #include <sstream>
 #include <vector>
 #include <poll.h>
+#include <set>
 #include <cstring>
 #include <stdexcept>
 #include <unistd.h>
 #include <fcntl.h>
 #include <arpa/inet.h>
-#include "Client.hpp"
 #include <map>
+#include "Client.hpp"
+#include "channel.hpp"
 
 
 class Server 
@@ -23,6 +25,7 @@ class Server
 		std::string password;
 		std::vector<pollfd> pollFds;
 		std::map<int, Client> clients;
+		std::map<std::string, Channel> channels;
 
 	void initSocket();
 	void acceptClient(); 
@@ -36,6 +39,9 @@ class Server
 	void regist_Client(Client &client);
 	void takePing(Client &client, const std::string &arg);
 	void takeQuit(Client &client, const std::string &arg);
+	void takeJoin(Client &client, const std::string &arg);
+	void takePrivmsg(Client &client, const std::string &arg);
+	void takePart(Client &Client, const std::string &arg);
 	public:
 		Server(int port, const std::string &password);
 		~Server();
