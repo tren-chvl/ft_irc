@@ -32,7 +32,7 @@ void Server::initSocket()
 	pfd.fd = Fd;
 	pfd.events = POLLIN;
 	pollFds.push_back(pfd);
-	std::cout << "Serveur en ecoute sur le port " << port << std::endl;
+	std::cout << "Server listening on port " << port << std::endl;
 }
 
 void Server::acceptClient()
@@ -153,6 +153,8 @@ void Server::parse_command(Client &client, const std::string &cmd)
 		takePrivmsg(client, cmd.substr(8));
 	else if (cmd.rfind("PART ", 0) == 0)
 		takePart(client, cmd.substr(5));
+	else if (cmd.rfind("TOPIC ", 0) == 0)
+		takeTopic(client, cmd.substr(6));
 	else
 		std::cout << "Unknown command :" << cmd << std::endl;
 }

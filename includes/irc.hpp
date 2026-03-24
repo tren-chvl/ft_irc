@@ -42,6 +42,8 @@ class Server
 	void takeJoin(Client &client, const std::string &arg);
 	void takePrivmsg(Client &client, const std::string &arg);
 	void takePart(Client &Client, const std::string &arg);
+	void takeTopic(Client &client, const std::string &arg);
+	void takeMode(Client &client , const std::string &arg);
 	public:
 		Server(int port, const std::string &password);
 		~Server();

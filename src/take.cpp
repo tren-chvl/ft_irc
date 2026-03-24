@@ -105,3 +105,34 @@ void Server::takeJoin(Client &client, const std::string &arg)
 	std::cout << "FD " << client.getFd() << " joined " << chanName << std::endl;
 }
 
+void	Server::takeTopic(Client &client, const std::string &arg)
+{
+	if (!client.regist)
+		return ;
+	size_t space = arg.find(' ');
+	std::string chanName = arg.substr(0, space);
+	if (!channels.count(chanName))
+		return ;
+	Channel &chan = channels.find(chanName)->second;
+	if (space == std::string::npos)
+	{
+		if (chan.getTopic().empty())
+		{
+			std::string reply = ":server 331 " + client.getNickname() + " " + chanName + " :No topic is set\r\n";
+			send(client.getFd(), reply.c_str(), reply.size(), 0);
+		}
+		else
+		{
+			std::string reply = ":server 332 " + client.getNickname() + " " + chanName + " :" + chan.getTopic() + "\r\n";
+			send(client.getFd(), reply.c_str(), reply.size(), 0);
+		}
+		return ;
+	}
+	std::string newTopic = arg.substr(space + 1);
+	if (!newTopic.empty() && newTopic[0] == ':')
+		newTopic.erase(0, 1);
+	chan.setTopic(newTopic);
+	std::string msg = ":" + client.getNickname() + " TOPIC " + chanName + " :" + newTopic + "\r\n";
+	for (std::set<int>::const_iterator it = chan.getMember().begin();it != chan.getMember().end(); ++it)
+		send(*it, msg.c_str(), msg.size(), 0);
+}
