@@ -6,7 +6,7 @@
 /*   By: zcadinot <zcadinot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/28 16:06:28 by zcadinot          #+#    #+#             */
-/*   Updated: 2026/03/28 16:07:13 by zcadinot         ###   ########.fr       */
+/*   Updated: 2026/03/28 16:50:29 by zcadinot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -157,25 +157,92 @@ void Server::takeKick(Client &client, const std::string &arg)
 	{
 		return ;
 	}
-	std::string chanel;
+	std::string channelName;
 	std::string name;
 	std::string reason;
 
 	//en gros la on vas set les arg a des variable
 
 	size_t arg1 = arg.find(" ", 0);
-	chanel = arg.substr(0,arg1);
+	channelName = arg.substr(0, arg1);
 
 	size_t arg2 = arg.find(" ", arg1 + 1);
 	name = arg.substr(arg1 + 1, arg2 - (arg1 + 1));
 
-	size_t arg3 = arg.find(" ", arg2 + 1);
-	reason = arg.substr(arg2 + 1);
+	//verifier si reason mit 
+	
+	if (arg2 == std::string::npos)
+	{
+		name = arg.substr(arg1 + 1);
+		reason = "";
+	}
+	else
+	{
+		reason = arg.substr(arg2 + 1);
+	}
 
 	// ici on netoyer reason pour enlver : si possible
 
 	if (!reason.empty() && reason[0] == ':')
-		reason.erase(0,1);
+		reason.erase(0, 1);
 
-	std::cout << "KICK:" << chanel << " "  << name << " " << reson << std::endl;
+	if (!channels.count(channelName))
+	{
+		// channe nom invalide
+		return;
+	}
+
+	// Recuper est initialise le channel
+	std::map<std::string, Channel>::iterator it = channels.find(channelName);
+	if (it == channels.end())
+		return;
+	Channel &chan = it->second;
+
+	// check operator est membre
+	if (!chan.isMember(client.getFd()))
+		return;
+	if (!chan.isOperator(client.getFd()))
+		return;
+
+	// Trouver le target
+	int targetFd = -1;
+
+	for (std::map<int, Client>::iterator itc = clients.begin(); itc != clients.end(); ++itc)
+	{
+		if (itc->second.getNickname() == name)
+		{
+			targetFd = itc->first;
+			break;
+		}
+	}
+
+	if (targetFd == -1)
+		return;
+
+	// verifier quil est dans le channel
+	if (!chan.isMember(targetFd))
+		return;
+
+	// envoyer le message de kick
+	std::string msg = ":" + client.getNickname() + " KICK " + channelName + " " + name;
+
+	if (!reason.empty())
+		msg += " :" + reason;
+
+	msg += "\r\n";
+
+	for (std::set<int>::const_iterator it2 = chan.getMember().begin();
+	it2 != chan.getMember().end(); ++it2)
+	{
+		send(*it2, msg.c_str(), msg.size(), 0);
+	}
+
+	// cho bail le mec mdrr
+	chan.removeMember(targetFd);
+
+	// si channel vide on le supprime
+	if (chan.getMember().empty())
+		channels.erase(channelName);
+
+	return ;
 }
