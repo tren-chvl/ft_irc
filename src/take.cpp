@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   take.cpp                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: zcadinot <zcadinot@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/28 16:06:28 by zcadinot          #+#    #+#             */
+/*   Updated: 2026/03/28 16:07:13 by zcadinot         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../includes/irc.hpp"
 
 void Server::takePass(Client &client, const std::string &arg)
@@ -135,4 +147,35 @@ void	Server::takeTopic(Client &client, const std::string &arg)
 	std::string msg = ":" + client.getNickname() + " TOPIC " + chanName + " :" + newTopic + "\r\n";
 	for (std::set<int>::const_iterator it = chan.getMember().begin();it != chan.getMember().end(); ++it)
 		send(*it, msg.c_str(), msg.size(), 0);
+}
+
+void Server::takeKick(Client &client, const std::string &arg)
+{
+	//verifier si ya probleme si caillou pas bien caller !!!
+
+	if (!client.regist || arg.empty())
+	{
+		return ;
+	}
+	std::string chanel;
+	std::string name;
+	std::string reason;
+
+	//en gros la on vas set les arg a des variable
+
+	size_t arg1 = arg.find(" ", 0);
+	chanel = arg.substr(0,arg1);
+
+	size_t arg2 = arg.find(" ", arg1 + 1);
+	name = arg.substr(arg1 + 1, arg2 - (arg1 + 1));
+
+	size_t arg3 = arg.find(" ", arg2 + 1);
+	reason = arg.substr(arg2 + 1);
+
+	// ici on netoyer reason pour enlver : si possible
+
+	if (!reason.empty() && reason[0] == ':')
+		reason.erase(0,1);
+
+	std::cout << "KICK:" << chanel << " "  << name << " " << reson << std::endl;
 }

@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   server.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: zcadinot <zcadinot@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/28 15:35:33 by zcadinot          #+#    #+#             */
+/*   Updated: 2026/03/28 15:35:35 by zcadinot         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../includes/irc.hpp"
 
 Server::Server(int port, const std::string &password) : port(port), password(password)
@@ -155,6 +167,8 @@ void Server::parse_command(Client &client, const std::string &cmd)
 		takePart(client, cmd.substr(5));
 	else if (cmd.rfind("TOPIC ", 0) == 0)
 		takeTopic(client, cmd.substr(6));
+	else if (cmd.rfind("KICK ", 0) == 0)
+		takeKick(client, cmd.substr(5));
 	else
 		std::cout << "Unknown command :" << cmd << std::endl;
 }
