@@ -7,6 +7,7 @@
 #include <vector>
 #include <poll.h>
 #include <set>
+#include <cstdlib>
 #include <cstring>
 #include <stdexcept>
 #include <unistd.h>
@@ -33,6 +34,11 @@ class Server
 	void remove_Client(int clientFd);
 	void client_to_buf(Client &client);
 	void parse_command(Client &client, const std::string &cmd);
+	bool parseModeArguments(const std::string &arg, std::string &chanName, std::string &modes, std::vector<std::string> &params);
+	void applySingleMode(Channel &chan, char sign, char mode, const std::string &param);
+	void applyAllModes(Channel &chan, const std::string &modes, const std::vector<std::string> &params);
+	void broadcastModeChange(Channel &chan, const std::string &msg);
+	int getFdByNick(const std::string &nick);
 	void takePass(Client &client, const std::string &arg);
 	void takeNick(Client &client, const std::string &arg);
 	void takeUser(Client &client, const std::string &arg);
@@ -45,6 +51,7 @@ class Server
 	void takeTopic(Client &client, const std::string &arg);
 	void takeKick(Client &client, const std::string &arg);
 	void takeMode(Client &client , const std::string &arg);
+	void takeInvite(Client &client, const std::string &arg);
 	public:
 		Server(int port, const std::string &password);
 		~Server();

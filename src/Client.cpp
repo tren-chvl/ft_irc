@@ -60,3 +60,4 @@ void Client::clearBuffer()
 {
 	buffer.clear();
 }
+

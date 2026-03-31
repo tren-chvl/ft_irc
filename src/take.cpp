@@ -93,39 +93,67 @@ void Server::regist_Client(Client &client)
 
 void Server::takeJoin(Client &client, const std::string &arg)
 {
-	if (!client.regist)
-		return;
-	if (arg.empty())
-		return;
-	std::string chanName = arg;
+	if (!client.regist || arg.empty())
+		return ;
+	std::stringstream ss(arg);
+	std::string chanName, key;
+	ss >> chanName;
+	ss >> key;
+
 	if (chanName[0] != '#')
 		chanName = "#" + chanName;
 	if (!channels.count(chanName))
 		channels.insert(std::make_pair(chanName, Channel(chanName)));
 	Channel &chan = channels.find(chanName)->second;
 	if (chan.isMember(client.getFd()))
+		return ;
+	if (chan.hasMode('l') && chan.getMember().size() >= static_cast<size_t>(chan.getLimit()))
+	{
+		std::string err = ":server 471 " + client.getNickname() + " " + chanName + " :Cannot join channel (+l)\r\n";
+		send(client.getFd(), err.c_str(), err.size(), 0);
 		return;
+	}
+	if (chan.hasMode('k') && key != chan.getKey())
+	{
+		std::string err = ":server 475 " + client.getNickname() + " " + chanName + " :Cannot join channel (+k)\r\n";
+		send(client.getFd(), err.c_str(), err.size(), 0);
+		return;
+	}
+	if (chan.hasMode('i') && !chan.isInvited(client.getFd()))
+	{
+		std::string err = ":server 473 " + client.getNickname() + " " + chanName + " :Cannot join channel (+i)\r\n";
+		send(client.getFd(), err.c_str(), err.size(), 0);
+		return ;
+	}
 	chan.addMember(client.getFd());
 	std::string joinmsg = ":" + client.getNickname() + " JOIN " + chanName + "\r\n";
-	for (std::set<int>::const_iterator it = chan.getMember().begin();it != chan.getMember().end(); ++it)
+	for (std::set<int>::const_iterator it = chan.getMember().begin(); it != chan.getMember().end(); ++it)
 		send(*it, joinmsg.c_str(), joinmsg.size(), 0);
 	std::string names = "= " + chanName + " :";
-	for (std::set<int>::const_iterator it = chan.getMember().begin();it != chan.getMember().end(); ++it)
+	for (std::set<int>::const_iterator it = chan.getMember().begin(); it != chan.getMember().end(); ++it)
 		names += clients[*it].getNickname() + " ";
 	names += "\r\n";
 	send(client.getFd(), names.c_str(), names.size(), 0);
+
 	std::cout << "FD " << client.getFd() << " joined " << chanName << std::endl;
 }
 
-void	Server::takeTopic(Client &client, const std::string &arg)
+
+void Server::takeTopic(Client &client, const std::string &arg)
 {
 	if (!client.regist)
 		return ;
+
 	size_t space = arg.find(' ');
 	std::string chanName = arg.substr(0, space);
+	std::string msg;
+	std::string newTopic;
+
 	if (!channels.count(chanName))
 		return ;
 	Channel &chan = channels.find(chanName)->second;
+	if (!chan.isMember(client.getFd()))
+		return ;
 	if (space == std::string::npos)
 	{
 		if (chan.getTopic().empty())
@@ -140,12 +168,18 @@ void	Server::takeTopic(Client &client, const std::string &arg)
 		}
 		return ;
 	}
-	std::string newTopic = arg.substr(space + 1);
+	if (chan.hasMode('t') && !chan.isOperator(client.getFd()))
+	{
+		std::string err = ":server 482 " + client.getNickname() + " " + chanName + " :You're not channel operator\r\n";
+		send(client.getFd(), err.c_str(), err.size(), 0);
+		return ;
+	}
+	newTopic = arg.substr(space + 1);
 	if (!newTopic.empty() && newTopic[0] == ':')
 		newTopic.erase(0, 1);
 	chan.setTopic(newTopic);
-	std::string msg = ":" + client.getNickname() + " TOPIC " + chanName + " :" + newTopic + "\r\n";
-	for (std::set<int>::const_iterator it = chan.getMember().begin();it != chan.getMember().end(); ++it)
+	msg = ":" + client.getNickname() + " TOPIC " + chanName + " :" + newTopic + "\r\n";
+	for (std::set<int>::const_iterator it = chan.getMember().begin(); it != chan.getMember().end(); ++it)
 		send(*it, msg.c_str(), msg.size(), 0);
 }
 
@@ -202,7 +236,11 @@ void Server::takeKick(Client &client, const std::string &arg)
 	if (!chan.isMember(client.getFd()))
 		return;
 	if (!chan.isOperator(client.getFd()))
-		return;
+	{
+		std::string error = ":server 482 " + client.getNickname() + " " + channelName + " :You're not channel operator\r\n";
+		send(client.getFd(), error.c_str(), error.size(), 0);
+		return ;
+	}
 
 	// Trouver le target
 	int targetFd = -1;
@@ -225,17 +263,12 @@ void Server::takeKick(Client &client, const std::string &arg)
 
 	// envoyer le message de kick
 	std::string msg = ":" + client.getNickname() + " KICK " + channelName + " " + name;
-
 	if (!reason.empty())
 		msg += " :" + reason;
-
 	msg += "\r\n";
-
 	for (std::set<int>::const_iterator it2 = chan.getMember().begin();
 	it2 != chan.getMember().end(); ++it2)
-	{
 		send(*it2, msg.c_str(), msg.size(), 0);
-	}
 
 	// cho bail le mec mdrr
 	chan.removeMember(targetFd);
@@ -243,6 +276,4 @@ void Server::takeKick(Client &client, const std::string &arg)
 	// si channel vide on le supprime
 	if (chan.getMember().empty())
 		channels.erase(channelName);
-
-	return ;
 }

@@ -169,6 +169,10 @@ void Server::parse_command(Client &client, const std::string &cmd)
 		takeTopic(client, cmd.substr(6));
 	else if (cmd.rfind("KICK ", 0) == 0)
 		takeKick(client, cmd.substr(5));
+	else if (cmd.rfind("MODE ", 0) == 0)
+		takeMode(client, cmd.substr(5));
+	else if (cmd.rfind("INVITE ", 0) == 0)
+		takeInvite(client, cmd.substr(7));
 	else
 		std::cout << "Unknown command :" << cmd << std::endl;
 }

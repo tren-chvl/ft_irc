@@ -8,7 +8,8 @@ SRC = src/main.cpp \
 		src/take.cpp \
 		src/ping_pong.cpp \
 		src/Channel.cpp \
-		src/Privmsg.cpp
+		src/Privmsg.cpp \
+		src/Mode/Mode.cpp
 OBJ = $(SRC:.cpp=.o)
 
 all: $(NAME)
