@@ -12,7 +12,7 @@
 
 #include "../includes/irc.hpp"
 
-Server::Server(int port, const std::string &password) : port(port), password(password)
+Server::Server(int port, const std::string &password) : port(port), Fd(-1) ,password(password), serverName("ircserv")
 {
 	initSocket();
 }
@@ -115,21 +115,32 @@ void Server::run()
 	}
 }
 
-void	Server::client_to_buf(Client &client)
+void Server::client_to_buf(Client &client)
 {
+	std::string	cmd;
 	std::string	&buf = client.getBuffer();
-	size_t	pos;
+	size_t		pos;
 
-	while ((pos = buf.find("\n")) != std::string::npos)
+	while (true)
 	{
-		std::string cmd = buf.substr(0, pos);
+		pos = buf.find("\r\n");
+		size_t len = 2;
+		if (pos == std::string::npos)
+		{
+			pos = buf.find("\n");
+			len = 1;
+		}
+		if (pos == std::string::npos)
+			break ;
+		cmd = buf.substr(0, pos);
+		buf.erase(0, pos + len);
 		if (!cmd.empty() && cmd[cmd.size() - 1] == '\r')
 			cmd.erase(cmd.size() - 1);
-		buf.erase(0, pos + 1);
 		if (!cmd.empty())
 			parse_command(client, cmd);
 	}
 }
+
 
 void Server::parse_command(Client &client, const std::string &cmd)
 {

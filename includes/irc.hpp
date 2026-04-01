@@ -24,6 +24,7 @@ class Server
 		int	port;
 		int	Fd;
 		std::string password;
+		std::string serverName;
 		std::vector<pollfd> pollFds;
 		std::map<int, Client> clients;
 		std::map<std::string, Channel> channels;
@@ -38,11 +39,13 @@ class Server
 	void applySingleMode(Channel &chan, char sign, char mode, const std::string &param);
 	void applyAllModes(Channel &chan, const std::string &modes, const std::vector<std::string> &params);
 	void broadcastModeChange(Channel &chan, const std::string &msg);
+	void sendError(Client &client, const std::string &code , const std::string &msg);
 	int getFdByNick(const std::string &nick);
+	void regist_Client(Client &client);
+
 	void takePass(Client &client, const std::string &arg);
 	void takeNick(Client &client, const std::string &arg);
 	void takeUser(Client &client, const std::string &arg);
-	void regist_Client(Client &client);
 	void takePing(Client &client, const std::string &arg);
 	void takeQuit(Client &client, const std::string &arg);
 	void takeJoin(Client &client, const std::string &arg);

@@ -15,13 +15,11 @@
 void Server::takePass(Client &client, const std::string &arg)
 {
 	if (client.has_Pass)
-	{
-		std::cout << "PASS already sent by FD " << client.getFd() << std::endl;
 		return;
-	}
 	if (arg.empty())
 	{
-		std::cout << "PASS empty for FD " << client.getFd() << std::endl;
+		std::cout << "PASS missing for FD " << client.getFd() << std::endl;
+		remove_Client(client.getFd());
 		return;
 	}
 	if (arg != password)
