@@ -35,44 +35,50 @@ void Server::takePass(Client &client, const std::string &arg)
 void Server::takeNick(Client &client, const std::string &arg)
 {
 	if (!client.has_Pass)
-	{
-		std::cout << "NICK refused (PASS missing) for FD " << client.getFd() << std::endl;
-		return;
-	}
+		return (sendError(client, "451", ":You have not registered"));
 	if (arg.empty())
+		return (sendError(client, "431", ":No nickname given"));
+	std::string nick = arg;
+	for (size_t i = 0; i < nick.size(); i++)
 	{
-		std::cout << "NICK empty for FD " << client.getFd() << std::endl;
-		return;
+		if (!isalnum(nick[i]) && nick[i] != '-' && nick[i] != '_' &&
+			nick[i] != '[' && nick[i] != ']' && nick[i] != '\\' &&
+			nick[i] != '`')
+		{
+			return (sendError(client, "432", nick + " :Erroneous nickname"));
+		}
 	}
-	client.setNickname(arg);
+	for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
+	{
+		if (it->second.getNickname() == nick)
+			return (sendError(client, "433", nick + " :Nickname is already in use"));
+	}
+	client.setNickname(nick);
 	client.has_Nick = true;
-	std::cout << "NICK set: " << arg << " for FD " << client.getFd() << std::endl;
+	std::cout << "NICK set: " << nick << " for FD " << client.getFd() << std::endl;
 	if (client.has_Pass && client.has_Nick && client.has_User && !client.regist)
 		regist_Client(client);
 }
-
 void Server::takeUser(Client &client, const std::string &arg)
 {
-	if (!client.has_Pass)
-	{
-		std::cout << "USER refused (PASS missing) for FD " << client.getFd() << std::endl;
-		return;
-	}
-	if (client.has_User)
-	{
-		std::cout << "USER already set for FD " << client.getFd() << std::endl;
-		return;
-	}
-	if (arg.empty())
-	{
-		std::cout << "USER empty for FD " << client.getFd() << std::endl;
-		return;
-	}
-	std::stringstream ss(arg);
+	size_t pos;
 	std::string username;
-	ss >> username;
-	size_t pos = arg.find(":");
-	std::string realname = (pos != std::string::npos) ? arg.substr(pos + 1) : "";
+	std::string mode;
+	std::string unused;
+	std::string realname;
+	if (!client.has_Pass)
+		return (sendError(client, "451", ":You have not registered"));
+	if (client.has_User)
+		return (sendError(client, "462", ":You may not reregister"));
+	std::stringstream ss(arg);
+	ss >> username >> mode >> unused;
+	if (username.empty() || mode.empty() || unused.empty())
+		return (sendError(client, "461", "USER :Not enough parameters"));
+	pos = arg.find(':');
+	if (pos != std::string::npos)
+		realname = arg.substr(pos + 1);
+	else
+		realname = "";
 	client.setUsername(username);
 	client.setRealname(realname);
 	client.has_User = true;
@@ -91,67 +97,58 @@ void Server::regist_Client(Client &client)
 
 void Server::takeJoin(Client &client, const std::string &arg)
 {
-	if (!client.regist || arg.empty())
-		return ;
+	if (!client.regist)
+		return (sendError(client, "451", ":You have not registered"));
+	if (arg.empty())
+		return (sendError(client, "461", "JOIN :Not enough parameters"));
 	std::stringstream ss(arg);
 	std::string chanName, key;
-	ss >> chanName;
-	ss >> key;
-
+	ss >> chanName >> key;
+	if (chanName.empty())
+		return (sendError(client, "461", "JOIN :Not enough parameters"));
 	if (chanName[0] != '#')
 		chanName = "#" + chanName;
-	if (!channels.count(chanName))
+	std::map<std::string, Channel>::iterator it = channels.find(chanName);
+	if (it == channels.end())
+	{
 		channels.insert(std::make_pair(chanName, Channel(chanName)));
-	Channel &chan = channels.find(chanName)->second;
+		it = channels.find(chanName);
+	}
+	Channel &chan = it->second;
 	if (chan.isMember(client.getFd()))
-		return ;
+		return;
 	if (chan.hasMode('l') && chan.getMember().size() >= static_cast<size_t>(chan.getLimit()))
-	{
-		std::string err = ":server 471 " + client.getNickname() + " " + chanName + " :Cannot join channel (+l)\r\n";
-		send(client.getFd(), err.c_str(), err.size(), 0);
-		return;
-	}
+		return (sendError(client, "471", chanName + " :Cannot join channel (+l)"));
 	if (chan.hasMode('k') && key != chan.getKey())
-	{
-		std::string err = ":server 475 " + client.getNickname() + " " + chanName + " :Cannot join channel (+k)\r\n";
-		send(client.getFd(), err.c_str(), err.size(), 0);
-		return;
-	}
+		return (sendError(client, "475", chanName + " :Cannot join channel (+k)"));
 	if (chan.hasMode('i') && !chan.isInvited(client.getFd()))
-	{
-		std::string err = ":server 473 " + client.getNickname() + " " + chanName + " :Cannot join channel (+i)\r\n";
-		send(client.getFd(), err.c_str(), err.size(), 0);
-		return ;
-	}
+		return (sendError(client, "473", chanName + " :Cannot join channel (+i)"));
 	chan.addMember(client.getFd());
 	std::string joinmsg = ":" + client.getNickname() + " JOIN " + chanName + "\r\n";
-	for (std::set<int>::const_iterator it = chan.getMember().begin(); it != chan.getMember().end(); ++it)
-		send(*it, joinmsg.c_str(), joinmsg.size(), 0);
+	for (std::set<int>::const_iterator it2 = chan.getMember().begin(); it2 != chan.getMember().end(); ++it2)
+		send(*it2, joinmsg.c_str(), joinmsg.size(), 0);
 	std::string names = "= " + chanName + " :";
-	for (std::set<int>::const_iterator it = chan.getMember().begin(); it != chan.getMember().end(); ++it)
-		names += clients[*it].getNickname() + " ";
+	for (std::set<int>::const_iterator it2 = chan.getMember().begin(); it2 != chan.getMember().end(); ++it2)
+		names += clients[*it2].getNickname() + " ";
 	names += "\r\n";
 	send(client.getFd(), names.c_str(), names.size(), 0);
-
 	std::cout << "FD " << client.getFd() << " joined " << chanName << std::endl;
 }
-
 
 void Server::takeTopic(Client &client, const std::string &arg)
 {
 	if (!client.regist)
-		return ;
-
+		return (sendError(client, "451", ":You have not registered"));
 	size_t space = arg.find(' ');
 	std::string chanName = arg.substr(0, space);
-	std::string msg;
-	std::string newTopic;
-
-	if (!channels.count(chanName))
-		return ;
-	Channel &chan = channels.find(chanName)->second;
+	if (chanName.empty())
+		return (sendError(client, "461", "TOPIC :Not enough parameters"));
+	std::map<std::string, Channel>::iterator it = channels.find(chanName);
+	if (it == channels.end())
+		return (sendError(client, "403", chanName + " :No such channel"));
+	Channel &chan = it->second;
 	if (!chan.isMember(client.getFd()))
-		return ;
+		return (sendError(client, "442", chanName + " :You're not on that channel"));
 	if (space == std::string::npos)
 	{
 		if (chan.getTopic().empty())
@@ -167,111 +164,66 @@ void Server::takeTopic(Client &client, const std::string &arg)
 		return ;
 	}
 	if (chan.hasMode('t') && !chan.isOperator(client.getFd()))
-	{
-		std::string err = ":server 482 " + client.getNickname() + " " + chanName + " :You're not channel operator\r\n";
-		send(client.getFd(), err.c_str(), err.size(), 0);
-		return ;
-	}
-	newTopic = arg.substr(space + 1);
+		return (sendError(client, "482", chanName + " :You're not channel operator"));
+	std::string newTopic = arg.substr(space + 1);
 	if (!newTopic.empty() && newTopic[0] == ':')
 		newTopic.erase(0, 1);
 	chan.setTopic(newTopic);
-	msg = ":" + client.getNickname() + " TOPIC " + chanName + " :" + newTopic + "\r\n";
-	for (std::set<int>::const_iterator it = chan.getMember().begin(); it != chan.getMember().end(); ++it)
-		send(*it, msg.c_str(), msg.size(), 0);
+	std::string msg = ":" + client.getNickname() + " TOPIC " + chanName + " :" + newTopic + "\r\n";
+	for (std::set<int>::const_iterator it2 = chan.getMember().begin(); it2 != chan.getMember().end(); ++it2)
+		send(*it2, msg.c_str(), msg.size(), 0);
 }
 
 void Server::takeKick(Client &client, const std::string &arg)
 {
-	//verifier si ya probleme si caillou pas bien caller !!!
-
-	if (!client.regist || arg.empty())
-	{
-		return ;
-	}
 	std::string channelName;
-	std::string name;
+	std::string targetNick;
 	std::string reason;
-
-	//en gros la on vas set les arg a des variable
-
-	size_t arg1 = arg.find(" ", 0);
+	std::string msg;
+	if (!client.regist)
+		return (sendError(client, "451", ":You have not registered"));
+	if (arg.empty())
+		return (sendError(client, "461", "KICK :Not enough parameters"));
+	size_t arg1 = arg.find(' ');
+	if (arg1 == std::string::npos)
+		return (sendError(client, "461", "KICK :Not enough parameters"));
 	channelName = arg.substr(0, arg1);
-
-	size_t arg2 = arg.find(" ", arg1 + 1);
-	name = arg.substr(arg1 + 1, arg2 - (arg1 + 1));
-
-	//verifier si reason mit 
-	
+	size_t arg2 = arg.find(' ', arg1 + 1);
 	if (arg2 == std::string::npos)
-	{
-		name = arg.substr(arg1 + 1);
-		reason = "";
-	}
-	else
-	{
-		reason = arg.substr(arg2 + 1);
-	}
-
-	// ici on netoyer reason pour enlver : si possible
-
+		return (sendError(client, "461", "KICK :Not enough parameters"));
+	targetNick = arg.substr(arg1 + 1, arg2 - (arg1 + 1));
+	reason = arg.substr(arg2 + 1);
 	if (!reason.empty() && reason[0] == ':')
 		reason.erase(0, 1);
-
-	if (!channels.count(channelName))
-	{
-		// channe nom invalide
-		return;
-	}
-
-	// Recuper est initialise le channel
 	std::map<std::string, Channel>::iterator it = channels.find(channelName);
 	if (it == channels.end())
-		return;
+		return (sendError(client, "403", channelName + " :No such channel"));
 	Channel &chan = it->second;
-
-	// check operator est membre
 	if (!chan.isMember(client.getFd()))
-		return;
+		return (sendError(client, "442", channelName + " :You're not on that channel"));
 	if (!chan.isOperator(client.getFd()))
-	{
-		std::string error = ":server 482 " + client.getNickname() + " " + channelName + " :You're not channel operator\r\n";
-		send(client.getFd(), error.c_str(), error.size(), 0);
-		return ;
-	}
-
-	// Trouver le target
+		return (sendError(client, "482", channelName + " :You're not channel operator"));
 	int targetFd = -1;
-
 	for (std::map<int, Client>::iterator itc = clients.begin(); itc != clients.end(); ++itc)
 	{
-		if (itc->second.getNickname() == name)
+		if (itc->second.getNickname() == targetNick)
 		{
 			targetFd = itc->first;
 			break;
 		}
 	}
-
 	if (targetFd == -1)
-		return;
-
-	// verifier quil est dans le channel
+		return sendError(client, "401", targetNick + " :No such nick");
 	if (!chan.isMember(targetFd))
-		return;
-
-	// envoyer le message de kick
-	std::string msg = ":" + client.getNickname() + " KICK " + channelName + " " + name;
+		return (sendError(client, "441", targetNick + " " + channelName + " :They aren't on that channel"));
+	msg = ":" + client.getNickname() + " KICK " + channelName + " " + targetNick;
 	if (!reason.empty())
 		msg += " :" + reason;
 	msg += "\r\n";
-	for (std::set<int>::const_iterator it2 = chan.getMember().begin();
-	it2 != chan.getMember().end(); ++it2)
+	for (std::set<int>::const_iterator it2 = chan.getMember().begin(); it2 != chan.getMember().end(); ++it2)
 		send(*it2, msg.c_str(), msg.size(), 0);
-
-	// cho bail le mec mdrr
 	chan.removeMember(targetFd);
-
-	// si channel vide on le supprime
 	if (chan.getMember().empty())
 		channels.erase(channelName);
 }
+
