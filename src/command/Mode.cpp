@@ -103,27 +103,30 @@ void Server::broadcastModeChange(Channel &chan, const std::string &msg)
 		send(*it, msg.c_str(), msg.size(), 0);
 }
 
-void Server::takeMode(Client &client, const std::string &arg)
+void	Server::takeMode(Client &client, const std::string &arg)
 {
 	if (!client.regist)
-		return ;
+		return (sendError(client, "451", ":You have not registered"));
+	if (arg.empty())
+		return (sendError(client, "461", "MODE :Not enough parameters"));
+
 	std::string chanName;
-	std::string error;
 	std::string modes;
 	std::string msg;
 	std::vector<std::string> params;
+
 	if (!parseModeArguments(arg, chanName, modes, params))
-		return;
-	if (!channels.count(chanName))
-		return;
-	Channel &chan = channels.find(chanName)->second;
+		return (sendError(client, "461", "MODE :Not enough parameters"));
+	std::map<std::string, Channel>::iterator it = channels.find(chanName);
+	if (it == channels.end())
+		return (sendError(client, "403", chanName + " :No such channel"));
+	Channel &chan = it->second;
+	if (!chan.isMember(client.getFd()))
+		return (sendError(client, "442", chanName + " :You're not on that channel"));
 	if (!chan.isOperator(client.getFd()))
-	{
-		error = ":server 482 " + client.getNickname() + " " + chanName + " :You're not channel operator\r\n";
-		send(client.getFd(), error.c_str(), error.size(), 0);
-		return ;
-	}
+		return (sendError(client, "482", chanName + " :You're not channel operator"));
 	applyAllModes(chan, modes, params);
 	msg = ":" + client.getNickname() + " MODE " + chanName + " " + arg.substr(chanName.size() + 1) + "\r\n";
 	broadcastModeChange(chan, msg);
 }
+

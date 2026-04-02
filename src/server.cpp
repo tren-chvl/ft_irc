@@ -70,46 +70,63 @@ void Server::remove_Client(int clientFd)
 		if (pollFds[i].fd == clientFd)
 		{
 			pollFds.erase(pollFds.begin() + i);
-			break;
+			break ;
 		}
 	}
 	clients.erase(clientFd);
 }
 
 
-void Server::Client_msg(int clienFd)
+void Server::regist_Client(Client &client)
+{
+	client.regist = true;
+	std::string welcome = ":ircserver 001 " + client.getNickname() + " :Welcome on the server IRC\r\n";
+	send(client.getFd(), welcome.c_str(), welcome.size(), 0);
+	std::cout << "Client FD " << client.getFd() << " registered !" << std::endl;
+}
+
+void Server::Client_msg(int clientFd)
 {
 	char buffer[1000];
-	int byte = recv(clienFd, buffer, sizeof(buffer) - 1, 0);
-	if (byte < 0)
-		return ;
-	if (byte == 0)
+	int byte = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
+
+	if (byte <= 0)
 	{
-		remove_Client(clienFd);
+		remove_Client(clientFd);
 		return ;
 	}
 	buffer[byte] = '\0';
-	Client &client = clients[clienFd];
+	std::map<int, Client>::iterator it = clients.find(clientFd);
+	if (it == clients.end())
+		return ;
+	Client &client = it->second;
 	client.appendToBuffer(buffer);
 	client_to_buf(client);
 }
 
+
 void Server::run() 
 {
+	int fd;
+	int ret;
 	while (true)
 	{
-		int ret = poll(&pollFds[0], pollFds.size(), -1);
+		ret = poll(&pollFds[0], pollFds.size(), -1);
 		if (ret < 0)
 			continue ;
-		for (size_t i = 0;i < pollFds.size(); i++)
+		for (size_t i = 0; i < pollFds.size(); i++)
 		{
-			if (pollFds[i].fd == Fd && (pollFds[i].revents & POLLIN))
-			{
+			fd = pollFds[i].fd;
+			if (fd == Fd && (pollFds[i].revents & POLLIN))
 				acceptClient();
-			}
-			else if (pollFds[i].fd != Fd && (pollFds[i].revents & POLLIN))
+			else if (fd != Fd && (pollFds[i].revents & POLLIN))
 			{
-				Client_msg(pollFds[i].fd);
+				Client_msg(fd);
+				if (clients.find(fd) == clients.end())
+				{
+					i--;
+					continue ;
+				}
 			}
 		}
 	}

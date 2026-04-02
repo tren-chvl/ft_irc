@@ -2,15 +2,23 @@ NAME = ircserv
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 INCLUDES = -Iincludes
-SRC = src/main.cpp \
+SRC =	src/main.cpp \
 		src/server.cpp \
 		src/Client.cpp \
-		src/take.cpp \
-		src/ping_pong.cpp \
 		src/Channel.cpp \
-		src/Privmsg.cpp \
-		src/Mode/Mode.cpp \
-		src/error.cpp
+		src/command/invite.cpp \
+		src/command/join.cpp \
+		src/command/kick.cpp \
+		src/command/Mode.cpp\
+		src/command/nick.cpp \
+		src/command/part.cpp \
+		src/command/pass.cpp \
+		src/command/ping.cpp \
+		src/command/Privmsg.cpp \
+		src/command/quit.cpp \
+		src/command/topic.cpp \
+		src/command/user.cpp \
+		src/error/error.cpp
 OBJ = $(SRC:.cpp=.o)
 
 all: $(NAME)

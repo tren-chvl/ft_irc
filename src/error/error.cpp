@@ -1,4 +1,4 @@
-#include "../includes/irc.hpp"
+#include "../../includes/irc.hpp"
 
 void Server::sendError(Client &client, const std::string &code , const std::string &msg)
 {
