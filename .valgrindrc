@@ -1,0 +1,8 @@
+--track-fds=yes
+--trace-children=yes
+--leak-check=full
+--show-leak-kinds=all
+--show-reachable=yes
+--error-limit=no
+--track-origins=yes
+-s

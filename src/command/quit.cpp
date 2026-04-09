@@ -7,7 +7,7 @@ void Server::takeQuit(Client &client, const std::string &arg)
 	if (!quitMsg.empty() && quitMsg[0] == ':')
 		quitMsg.erase(0, 1);
 	fullQuit = ":" + client.getNickname() + " QUIT :" + quitMsg + "\r\n";
-	for (std::map<std::string, Channel>::iterator it = channels.begin();it != channels.end(); )
+	for (std::map<std::string, Channel>::iterator it = channels.begin();it != channels.end();)
 	{
 		Channel &chan = it->second;
 		if (chan.isMember(client.getFd()))
@@ -28,5 +28,5 @@ void Server::takeQuit(Client &client, const std::string &arg)
 		++it;
 	}
 	std::cout << "Client " << client.getFd() << " QUIT (" << quitMsg << ")" << std::endl;
-	remove_Client(client.getFd());
+	client.Disco_down();
 }

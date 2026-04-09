@@ -2,6 +2,12 @@
 #include <iostream>
 #include <cstdlib>
 
+bool sign = true;
+
+void handle_sigint(int)
+{
+	sign = false;
+} 
 int main(int argc, char **argv)
 {
 	if (argc != 3)
@@ -18,6 +24,7 @@ int main(int argc, char **argv)
 	std::string password = argv[2];
 	try
 	{
+		signal(SIGINT, handle_sigint);
 		Server server(port, password);
 		server.run();
 	}

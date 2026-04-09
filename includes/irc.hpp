@@ -5,6 +5,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <errno.h>
 #include <poll.h>
 #include <set>
 #include <cstdlib>
@@ -14,9 +15,11 @@
 #include <fcntl.h>
 #include <arpa/inet.h>
 #include <map>
+#include <signal.h>
 #include "Client.hpp"
 #include "channel.hpp"
 
+extern bool sign;
 
 class Server 
 {

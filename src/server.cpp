@@ -11,6 +11,10 @@
 /* ************************************************************************** */
 
 #include "../includes/irc.hpp"
+#include <errno.h>
+
+
+extern bool sign;
 
 Server::Server(int port, const std::string &password) : port(port), Fd(-1) ,password(password), serverName("ircserv")
 {
@@ -43,6 +47,7 @@ void Server::initSocket()
 	pollfd pfd;
 	pfd.fd = Fd;
 	pfd.events = POLLIN;
+	pfd.revents = 0;
 	pollFds.push_back(pfd);
 	std::cout << "Server listening on port " << port << std::endl;
 }
@@ -51,11 +56,16 @@ void Server::acceptClient()
 {
 	int ClientFd = accept(Fd, NULL, NULL);
 	if (ClientFd < 0)
-		return ;
+	{
+		if (errno == EMFILE)
+			std::cerr << "Too many open files: cannot accept more clients" << std::endl;
+		return;
+	}
 	fcntl(ClientFd, F_SETFL, O_NONBLOCK);
 	pollfd poll_fd;
 	poll_fd.fd = ClientFd;
 	poll_fd.events = POLLIN;
+	poll_fd.revents = 0;
 	pollFds.push_back(poll_fd);
 	clients[ClientFd] = Client(ClientFd);
 	std::cout << "new client connected : FD = " << ClientFd << std::endl;
@@ -102,6 +112,8 @@ void Server::Client_msg(int clientFd)
 	Client &client = it->second;
 	client.appendToBuffer(buffer);
 	client_to_buf(client);
+	if (client.Do_Disco())
+		remove_Client(clientFd);
 }
 
 
@@ -109,9 +121,12 @@ void Server::run()
 {
 	int fd;
 	int ret;
-	while (true)
+
+	while (sign)
 	{
-		ret = poll(&pollFds[0], pollFds.size(), -1);
+		ret = poll(&pollFds[0], pollFds.size(), 100);
+		if (!sign)
+			break ;
 		if (ret < 0)
 			continue ;
 		for (size_t i = 0; i < pollFds.size(); i++)
@@ -130,6 +145,11 @@ void Server::run()
 			}
 		}
 	}
+	std::cout << "Server shutting down cleanly..." << std::endl;
+	for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
+		close(it->first);
+	clients.clear();
+	pollFds.clear();
 }
 
 void Server::client_to_buf(Client &client)

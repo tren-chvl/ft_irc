@@ -7,6 +7,7 @@ class Client
 {
 	private:
 		int	fd;
+		bool disco;
 		std::string nickname;
 		std::string username;
 		std::string realname;
@@ -31,6 +32,14 @@ class Client
 	bool		has_Nick;
 	bool		has_User;
 	bool		regist;
+	bool		Do_Disco() const 
+	{
+		return (disco);
+	}
+	void		Disco_down()
+	{
+		disco = true;
+	}
 };
 
 #endif
