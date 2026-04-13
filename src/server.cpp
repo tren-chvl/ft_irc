@@ -133,7 +133,6 @@ bool Server::client_to_buf_safe(int clientFd)
 	size_t pos;
 	size_t len;
 	std::string cmd;
-	std::string &buf;
 
 	while (true)
 	{
@@ -141,7 +140,7 @@ bool Server::client_to_buf_safe(int clientFd)
 		if (it == clients.end())
 			return (true);
 		Client &client = it->second;
-		&buf = client.getBuffer();
+		std::string &buf = client.getBuffer();
 		pos = buf.find("\r\n");
 		len = 2;
 		if (pos == std::string::npos)

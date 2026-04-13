@@ -10,18 +10,59 @@ int Server::getFdByNick(const std::string &nick)
 	return (-1);
 }
 
-bool Server::parseModeArguments(const std::string &arg, std::string &chanName, std::string &modes, std::vector<std::string> &params)
+// bool Server::parseModeArguments(const std::string &arg, std::string &chanName, std::string &modes, std::vector<std::string> &params)
+// {
+// 	std::stringstream ss(arg);
+// 	ss >> chanName;
+// 	if (chanName.empty())
+// 		return false;
+// 	std::string rest;
+// 	std::getline(ss, rest);
+// 	if (rest.empty())
+// 		return false;
+// 	while (!rest.empty() && rest[0] == ' ')
+// 		rest.erase(0, 1);
+// 	std::stringstream ss2(rest);
+// 	ss2 >> modes;
+// 	if (modes.empty())
+// 		return false;
+// 	std::string p;
+// 	while (ss2 >> p)
+// 		params.push_back(p);
+// 	return (true);
+// }
+
+bool Server::parseModeArguments(const std::string &arg,std::string &chanName,std::string &modes,std::vector<std::string> &params)
 {
 	std::stringstream ss(arg);
 	ss >> chanName;
-	ss >> modes;
-	if (chanName.empty() || modes.empty())
+	if (chanName.empty())
 		return false;
-	std::string p;
-	while (ss >> p)
-		params.push_back(p);
+	std::string rest;
+	std::getline(ss, rest);
+	while (!rest.empty() && rest[0] == ' ')
+		rest.erase(0, 1);
+	if (rest.empty())
+		return false;
+	std::stringstream ss2(rest);
+	std::vector<std::string> tokens;
+	std::string tok;
+	while (ss2 >> tok)
+		tokens.push_back(tok);
+	if (tokens.empty())
+		return false;
+	modes = tokens[0];
+	size_t i = 1;
+	while (i < tokens.size() && (tokens[i][0] == '+' || tokens[i][0] == '-'))
+	{
+		modes += tokens[i];
+		i++;
+	}
+	for (size_t i  = 1; i < tokens.size(); i++)
+		params.push_back(tokens[i]);
 	return (true);
 }
+
 
 void Server::applySingleMode(Channel &chan, char sign, char mode, const std::string &param)
 {
@@ -109,7 +150,6 @@ void	Server::takeMode(Client &client, const std::string &arg)
 		return (sendError(client, "451", ":You have not registered"));
 	if (arg.empty())
 		return (sendError(client, "461", "MODE :Not enough parameters"));
-
 	std::string chanName;
 	std::string modes;
 	std::string msg;
@@ -129,4 +169,3 @@ void	Server::takeMode(Client &client, const std::string &arg)
 	msg = ":" + client.getNickname() + " MODE " + chanName + " " + arg.substr(chanName.size() + 1) + "\r\n";
 	broadcastModeChange(chan, msg);
 }
-

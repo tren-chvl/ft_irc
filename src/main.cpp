@@ -24,6 +24,16 @@ int main(int argc, char **argv)
 		return (1);
 	}
 	std::string password = argv[2];
+
+	while(!password.empty() && isspace(password[0]))
+		password.erase(0, 1);
+	while(!password.empty() && isspace(password[password.size() - 1]))
+		password.erase(password.size() - 1);
+	if (password.empty())
+	{
+		std::cerr << "Error: password cannot be empty or space only." << std::endl;
+		return (1);
+	}
 	try
 	{
 		signal(SIGINT, handle_sigint);
