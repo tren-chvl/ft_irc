@@ -7,7 +7,9 @@ bool sign = true;
 void handle_sigint(int)
 {
 	sign = false;
-} 
+}
+
+
 int main(int argc, char **argv)
 {
 	if (argc != 3)

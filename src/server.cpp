@@ -33,7 +33,10 @@ void Server::initSocket()
 	if (Fd < 0)
 		throw std::runtime_error("socket() failed");
 	if (fcntl(Fd, F_SETFL, O_NONBLOCK) < 0)
+	{
+		close(Fd);
 		throw std::runtime_error("fcntl() failed");
+	}
 	setsockopt(Fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 	sockaddr_in addr;
 	std::memset(&addr, 0, sizeof(addr));
@@ -41,9 +44,15 @@ void Server::initSocket()
 	addr.sin_addr.s_addr = INADDR_ANY;
 	addr.sin_port = htons(port);
 	if (bind(Fd, (sockaddr*)&addr, sizeof(addr)) < 0)
+	{
+		close(Fd);
 		throw std::runtime_error("bind() failed");
+	}
 	if (listen(Fd, 10) < 0)
+	{
+		close(Fd);
 		throw std::runtime_error("listen() failed");
+	}
 	pollfd pfd;
 	pfd.fd = Fd;
 	pfd.events = POLLIN;
@@ -98,24 +107,63 @@ void Server::regist_Client(Client &client)
 void Server::Client_msg(int clientFd)
 {
 	char buffer[1000];
+	bool removed;
 	int byte = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
 
 	if (byte <= 0)
 	{
 		remove_Client(clientFd);
-		return ;
+		return;
 	}
 	buffer[byte] = '\0';
 	std::map<int, Client>::iterator it = clients.find(clientFd);
 	if (it == clients.end())
-		return ;
-	Client &client = it->second;
-	client.appendToBuffer(buffer);
-	client_to_buf(client);
-	if (client.Do_Disco())
+		return;
+	it->second.appendToBuffer(buffer);
+	removed = client_to_buf_safe(clientFd);
+	if (removed)
+		return;
+	it = clients.find(clientFd);
+	if (it != clients.end() && it->second.Do_Disco())
 		remove_Client(clientFd);
 }
 
+bool Server::client_to_buf_safe(int clientFd)
+{
+	size_t pos;
+	size_t len;
+	std::string cmd;
+	std::string &buf;
+
+	while (true)
+	{
+		std::map<int, Client>::iterator it = clients.find(clientFd);
+		if (it == clients.end())
+			return (true);
+		Client &client = it->second;
+		&buf = client.getBuffer();
+		pos = buf.find("\r\n");
+		len = 2;
+		if (pos == std::string::npos)
+		{
+			pos = buf.find("\n");
+			len = 1;
+		}
+		if (pos == std::string::npos)
+			break ;
+		cmd = buf.substr(0, pos);
+		buf.erase(0, pos + len);
+		if (!cmd.empty() && cmd[cmd.size() - 1] == '\r')
+			cmd.erase(cmd.size() - 1);
+		if (!cmd.empty())
+		{
+			parse_command(client, cmd);
+			if (clients.find(clientFd) == clients.end())
+				return (true);
+		}
+	}
+	return (false);
+}
 
 void Server::run() 
 {
@@ -145,7 +193,7 @@ void Server::run()
 			}
 		}
 	}
-	std::cout << "Server shutting down cleanly..." << std::endl;
+	std::cout << "Server shutting down !" << std::endl;
 	for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
 		close(it->first);
 	clients.clear();

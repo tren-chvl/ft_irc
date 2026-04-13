@@ -45,6 +45,8 @@ class Server
 	void sendError(Client &client, const std::string &code , const std::string &msg);
 	int getFdByNick(const std::string &nick);
 	void regist_Client(Client &client);
+	bool client_to_buf_safe(int clientFd);
+
 
 	void takePass(Client &client, const std::string &arg);
 	void takeNick(Client &client, const std::string &arg);
