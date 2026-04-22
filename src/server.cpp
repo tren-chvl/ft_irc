@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: zcadinot <zcadinot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jhauvill <jhauvill@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/28 15:35:33 by zcadinot          #+#    #+#             */
-/*   Updated: 2026/03/28 15:35:35 by zcadinot         ###   ########.fr       */
+/*   Updated: 2026/04/22 15:06:33 by jhauvill         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -271,3 +271,4 @@ void Server::parse_command(Client &client, const std::string &cmd)
 	else
 		std::cout << "Unknown command :" << cmd << std::endl;
 }
+
