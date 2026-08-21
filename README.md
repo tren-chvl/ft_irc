@@ -1,35 +1,115 @@
-# ft_irc
+<div align="center">
 
-## Overview
+```
+▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄        ▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄
+▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄        ███  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄
+                                ███          ███             
+███▄▄▄▄▄▄        ███            ███  ███▄▄▄▄▄███  ███        
+███▄▄▄▄▄▄        ███            ███  ███▄▄▄▄▄     ███        
+███              ███            ███  ███ ███▌     ███        
+███              ███            ███  ███ ▐███     ███▄▄▄▄▄▄▄▄
+███              ███            ███  ███  ███▌    ███▄▄▄▄▄▄▄▄
+```
 
-ft_irc is a custom Internet Relay Chat (IRC) server written in C++98.
+### A custom IRC server written in C++98
 
-The goal of this project is to implement a fully functional IRC server compatible with a real IRC client. The server must handle multiple clients simultaneously using non-blocking I/O and a single poll() (or equivalent) instance.
+<br>
 
-The server follows the IRC protocol basics and supports authentication, nickname management, channel management, private messaging, and operator-specific commands.
+<img src="https://upload.wikimedia.org/wikipedia/commons/1/18/C_Programming_Language.svg" height="90">
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+<img src="https://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg" height="90">
+<br><br>
+
+![C++98](https://img.shields.io/badge/C%2B%2B-98-00599C?style=for-the-badge\&logo=cplusplus\&logoColor=white)
+![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge\&logo=linux\&logoColor=black)
+![IRC](https://img.shields.io/badge/IRC-Protocol-5865F2?style=for-the-badge)
+![42](https://img.shields.io/badge/42-School-black?style=for-the-badge)
+
+</div>
 
 ---
 
-## Compilation
+# 📡 Overview
+
+**ft_irc** is a custom **Internet Relay Chat (IRC) server** written in **C++98**.
+
+The goal of this project is to implement a fully functional IRC server compatible with a real IRC client.
+
+The server handles **multiple clients simultaneously** using:
+
+* ⚡ Non-blocking I/O
+* 🔄 A single `poll()` instance
+* 🌐 TCP/IP communication
+* 🔐 Client authentication
+* 💬 Private and channel messaging
+* 👑 IRC operator commands
+* 🏠 Channel management
+
+---
+
+# 🧠 Architecture
+
+```text
+                         ┌─────────────────────┐
+                         │       IRC CLIENT    │
+                         └──────────┬──────────┘
+                                    │
+                                    │ TCP
+                                    ▼
+                       ┌────────────────────────┐
+                       │       IRC SERVER       │
+                       │                        │
+                       │       poll()           │
+                       └───────────┬────────────┘
+                                   │
+                  ┌────────────────┼────────────────┐
+                  │                │                │
+                  ▼                ▼                ▼
+             ┌─────────┐      ┌─────────┐      ┌─────────┐
+             │ Client  │      │ Client  │      │ Client  │
+             │    #1   │      │    #2   │      │    #3   │
+             └────┬────┘      └────┬────┘      └────┬────┘
+                  │                │                │
+                  └────────────────┼────────────────┘
+                                   │
+                                   ▼
+                           ┌──────────────┐
+                           │   Channel    │
+                           │              │
+                           │  Users       │
+                           │  Operators   │
+                           │  Modes       │
+                           │  Topic       │
+                           └──────────────┘
+```
+
+---
+
+# ⚙️ Compilation
 
 The project is compiled using:
 
-* C++98 standard
-* Flags: `-Wall -Wextra -Werror`
+* **C++98**
+* `-Wall`
+* `-Wextra`
+* `-Werror`
 
 ### Makefile rules
 
-The Makefile contains the following rules:
+The Makefile contains:
 
-* `all`
-* `$(NAME)`
-* `clean`
-* `fclean`
-* `re`
+```text
+all
+$(NAME)
+clean
+fclean
+re
+```
 
 No unnecessary relinking is performed.
 
-To compile:
+### Build
 
 ```bash
 make
@@ -37,14 +117,13 @@ make
 
 ---
 
-## Usage
+# 🚀 Usage
+
+Start the server with:
 
 ```bash
 ./ircserv <port> <password>
 ```
-
-* `port`: TCP port used for incoming connections
-* `password`: Password required by clients to authenticate
 
 Example:
 
@@ -52,125 +131,181 @@ Example:
 ./ircserv 6667 mypassword
 ```
 
----
-
-## Technical Constraints
-
-* C++98 only
-* No external libraries
-* No Boost
-* No forking
-* All file descriptors are non-blocking
-* Only one poll() (or equivalent) is used
-* Communication via TCP/IP (IPv4 or IPv6)
-* The server must never crash
-* Memory leaks are forbidden
-
----
-
-## Core Features (Mandatory)
-
-### Authentication
-
-* PASS
-* NICK
-* USER
-
-A client must:
-
-1. Provide the correct password
-2. Set a nickname
-3. Set a username
-
-Only then is the client fully registered.
-
----
-
-### Channel Management
-
-* JOIN
-* PART
-* PRIVMSG
-
-Features:
-
-* Clients can join channels
-* Messages sent to a channel are broadcast to all members
-* Private messages between users are supported
-
----
-
-### Operators and Modes
-
-Each channel has:
-
-* Regular users
-* Channel operators
-
-Operator commands implemented:
-
-* KICK — remove a user from a channel
-* INVITE — invite a user to a channel
-* TOPIC — view or change the channel topic
-* MODE — manage channel modes
-
-Supported channel modes:
-
-* `i` — Invite-only channel
-* `t` — Only operators can change topic
-* `k` — Channel password
-* `o` — Grant/remove operator status
-* `l` — User limit
-
----
-
-## Architecture
-
-### Core Components
-
-* **Server**
-
-  * Socket creation
-  * Bind and listen
-  * poll() loop
-  * Accept new connections
-
-* **Client**
-
-  * Authentication state
-  * Buffer management
-  * Nickname and username
-
-* **Channel**
-
-  * Member list
-  * Operator list
-  * Modes
-  * Topic
-
----
-
-## Network Handling
-
-* All sockets are set to non-blocking mode
-* poll() monitors:
-
-  * Listening socket
-  * Client sockets (read/write)
-* Partial packets are buffered
-* Commands are processed only once fully reconstructed
-
-Example test using netcat:
+You can then connect using an IRC client or a simple TCP client:
 
 ```bash
 nc -C 127.0.0.1 6667
 ```
 
-Test partial command sending to ensure correct buffering.
+---
+
+# 🧱 Technical Constraints
+
+| Constraint         | Implementation          |
+| ------------------ | ----------------------- |
+| Language           | C++98                   |
+| Compiler flags     | `-Wall -Wextra -Werror` |
+| External libraries | ❌ None                  |
+| Boost              | ❌ Not used              |
+| Forking            | ❌ Not used              |
+| Sockets            | Non-blocking            |
+| Multiplexing       | `poll()`                |
+| Protocol           | IRC                     |
+| Network            | TCP/IP                  |
+| Memory leaks       | ❌ Forbidden             |
 
 ---
 
-## Error Handling
+# 🔐 Authentication
+
+A client must successfully complete:
+
+```text
+PASS
+  │
+  ▼
+NICK
+  │
+  ▼
+USER
+  │
+  ▼
+REGISTERED
+```
+
+Supported commands:
+
+* `PASS`
+* `NICK`
+* `USER`
+
+A client is fully registered only after the required authentication steps have been completed.
+
+---
+
+# 💬 Channel Management
+
+Supported commands:
+
+```text
+JOIN
+PART
+PRIVMSG
+```
+
+Clients can:
+
+* Join channels
+* Leave channels
+* Send messages to channels
+* Send private messages
+* Communicate with multiple users simultaneously
+
+---
+
+# 👑 Operators & Modes
+
+Each channel can contain:
+
+```text
+┌─────────────────────────────┐
+│          CHANNEL            │
+├─────────────────────────────┤
+│ 👑 Operators                │
+│ 👤 Regular users            │
+│                             │
+│ Topic                       │
+│ Channel modes               │
+└─────────────────────────────┘
+```
+
+### Operator commands
+
+| Command  | Description          |
+| -------- | -------------------- |
+| `KICK`   | Remove a user        |
+| `INVITE` | Invite a user        |
+| `TOPIC`  | View/change topic    |
+| `MODE`   | Manage channel modes |
+
+### Supported modes
+
+| Mode | Description                     |
+| ---- | ------------------------------- |
+| `i`  | Invite-only channel             |
+| `t`  | Only operators can change topic |
+| `k`  | Channel password                |
+| `o`  | Grant/remove operator status    |
+| `l`  | User limit                      |
+
+---
+
+# 🖥️ Network Handling
+
+All sockets are configured as **non-blocking**.
+
+The server's `poll()` instance monitors:
+
+```text
+                 poll()
+                   │
+       ┌───────────┼───────────┐
+       ▼           ▼           ▼
+  Listening     Client #1   Client #2
+   socket
+                   │
+                   ▼
+              Read / Write
+```
+
+Partial packets are buffered until complete commands can be reconstructed.
+
+This allows the server to correctly handle situations such as:
+
+* Partial packet reception
+* Multiple clients
+* Slow connections
+* Unexpected disconnections
+* Rapid connect/disconnect cycles
+
+---
+
+# 🧩 Core Components
+
+### 🖥️ Server
+
+Responsible for:
+
+* Socket creation
+* `bind()`
+* `listen()`
+* `accept()`
+* `poll()`
+* Connection management
+
+### 👤 Client
+
+Responsible for:
+
+* Authentication state
+* Nickname
+* Username
+* Input buffering
+* Client state
+
+### 🏠 Channel
+
+Responsible for:
+
+* Member list
+* Operators
+* Channel modes
+* Topic
+* Permissions
+
+---
+
+# 🛡️ Error Handling
 
 The server handles:
 
@@ -178,57 +313,102 @@ The server handles:
 * Unknown users
 * Unknown channels
 * Permission errors
-* Incorrect password
+* Incorrect passwords
 * Channel mode violations
-
-The server must remain stable under:
-
-* Partial packet reception
-* High number of clients
-* Low bandwidth
 * Unexpected disconnections
 
----
-
-## Bonus (Optional)
-
-Implemented only if mandatory part is perfect:
-
-* File transfer
-* IRC bot
+The objective is to keep the server stable even under unusual network conditions.
 
 ---
 
-## Testing
+# 🧪 Testing
 
-Recommended:
+Recommended testing includes:
 
-* Test with a real IRC client
-* Test multiple simultaneous clients
-* Test edge cases (invalid commands, rapid connect/disconnect)
-* Verify memory leaks with valgrind
+### IRC client
+
+Connect using a real IRC client and test multiple users simultaneously.
+
+### Netcat
+
+```bash
+nc -C 127.0.0.1 6667
+```
+
+### Multiple clients
+
+```text
+Client #1 ─────┐
+Client #2 ─────┼──► IRC SERVER
+Client #3 ─────┤
+Client #4 ─────┘
+```
+
+### Memory checks
+
+Use:
+
+```bash
+valgrind ./ircserv 6667 mypassword
+```
+
+to investigate memory leaks and invalid memory accesses.
 
 ---
 
-## Evaluation Notes
+# 🎁 Bonus
+
+Optional features may include:
+
+* 📁 File transfer
+* 🤖 IRC bot
+
+Bonus features should only be implemented once the mandatory requirements are fully stable.
+
+---
+
+# 📝 Evaluation
 
 During peer evaluation, you may be asked to:
 
 * Modify a function
 * Add a small feature
-* Adjust a mode behavior
+* Adjust a channel mode
 * Explain the architecture
+* Explain the event loop
+* Explain `poll()`
+* Explain authentication
+* Explain channel management
+* Explain buffer management
 
-You must be able to explain:
-
-* The event loop
-* The poll() usage
-* Authentication flow
-* Channel mode handling
-* Buffer management strategy
+The goal is not only to have a working server, but to **understand every part of it**.
 
 ---
 
-## Author
+# 🧑‍💻 Author
 
-Marc Jhauvile Zibrian
+<div align="center">
+
+### tren-chvl
+
+[![GitHub](https://img.shields.io/badge/GitHub-tren--chvl-181717?style=for-the-badge\&logo=github)](https://github.com/tren-chvl)
+
+**ft_irc**
+
+</div>
+
+---
+
+<div align="center">
+
+```text
+     ╔══════════════════════════════════╗
+     ║                                  ║
+     ║        🌐  ft_irc  🌐            ║
+     ║                                  ║
+     ║       C++98 • Linux • IRC        ║
+     ║                                  ║
+     ╚══════════════════════════════════╝
+```
+
+</div>
