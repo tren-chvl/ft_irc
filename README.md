@@ -15,14 +15,8 @@
 
 <br>
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/1/18/C_Programming_Language.svg" height="90">
-&nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;
-<img src="https://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg" height="90">
-<br><br>
-
 ![C++98](https://img.shields.io/badge/C%2B%2B-98-00599C?style=for-the-badge\&logo=cplusplus\&logoColor=white)
-![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge\&logo=linux\&logoColor=black)
+![Linux](https://img.shields.io/badge/Linux-grey?style=for-the-badge\&logo=linux\&logoColor=black)
 ![IRC](https://img.shields.io/badge/IRC-Protocol-5865F2?style=for-the-badge)
 ![42](https://img.shields.io/badge/42-School-black?style=for-the-badge)
 
